@@ -1,5 +1,4 @@
 package com.earnest;
-import lombok.extern.log4j.*;
 
 /**
  * Created by yfang on 10/29/2017.

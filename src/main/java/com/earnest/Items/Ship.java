@@ -5,25 +5,34 @@ import lombok.Setter;
 
 /**
  * Created by yfang on 10/29/2017.
- * The checkSunk method will check if all cells the ship occupies have been attacked. 
  */
+enum ShipType {
+    Carrier(5),
+    Battleship(4),
+    Cruiser(3),
+    Submarine(3),
+    Destroyer(2);
+
+    private final int size;
+
+    ShipType(int size) {
+        this.size = size;
+    }
+
+    int getSize() {
+        return size;
+    }
+}
+
 
 @Getter
 @Setter
 class Ship {
-    private int size;
-    private Cell[] positions;
+    private final ShipType type;
+    private boolean sunk;
 
-    Ship(int size) {
-        this.size = size;
-    }
-
-    boolean checkSunk() {
-        for (Cell position: positions) {
-            if (!position.isAttacked()) {
-                return false;
-            }
-        }
-        return true;
+    Ship(ShipType type) {
+        this.type = type;
+        sunk = false;
     }
 }

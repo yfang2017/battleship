@@ -13,6 +13,8 @@ public class UserTest {
 
     @Before
     public void setUp() throws Exception {
+        // for the test, the board is 10x10 in size.
+        // each user has 5 ships, carrier, battleship, cruiser, submarine, destroyer.
         int m = 10;
         int n = 10;
         userOne.board = new Cell[m][n];
@@ -24,11 +26,11 @@ public class UserTest {
         }
 
         userTwo.fleet = new Ship[5];
-        userTwo.fleet[0] = new Ship(5);   //Carrier
-        userTwo.fleet[1] = new Ship(4);   //Battleship
-        userTwo.fleet[2] = new Ship(3);   //Cruiser
-        userTwo.fleet[3] = new Ship(3);   //Submarine
-        userTwo.fleet[4] = new Ship(2);   //Destroyer
+        userTwo.fleet[0] = new Ship(ShipType.Carrier);   //Carrier
+        userTwo.fleet[1] = new Ship(ShipType.Battleship);   //Battleship
+        userTwo.fleet[2] = new Ship(ShipType.Cruiser);   //Cruiser
+        userTwo.fleet[3] = new Ship(ShipType.Submarine);   //Submarine
+        userTwo.fleet[4] = new Ship(ShipType.Destroyer);   //Destroyer
 
         try {
             userTwo.setShipPosition(userTwo.fleet[0], "B1", "B5");
@@ -102,16 +104,24 @@ public class UserTest {
     private void printBoard() {
         int m = userTwo.board.length;
         int n = userTwo.board[0].length;
-        int[][] printableBoard = new int[m][n];
+        char[][] printableBoard = new char[m][n];
+
+        //'o' means empty cell
+        //'+' means cell occupied by the ship
+        //'x' means cell that has been attacked
+        //'*' means cell occupied by the ship and has been attacked.
 
         for(int i = 0; i < m; i++) {
             for(int j = 0; j < n; j++) {
                 Cell tmp = userTwo.board[i][j];
-                if(tmp.getShip() != null) {
-                    printableBoard[i][j]++;
-                    if(tmp.isAttacked()) {
-                        printableBoard[i][j]++;
-                    }
+                if(tmp.getShip() != null && tmp.isAttacked()) {
+                    printableBoard[i][j] = '*';
+                } else if(tmp.getShip() != null) {
+                    printableBoard[i][j] = '+';
+                } else if(tmp.isAttacked()) {
+                    printableBoard[i][j] = 'x';
+                } else {
+                    printableBoard[i][j] = 'o';
                 }
                 System.out.print(printableBoard[i][j]);
             }

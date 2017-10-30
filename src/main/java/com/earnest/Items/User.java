@@ -1,12 +1,16 @@
 package com.earnest.Items;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashMap;
+
 /**
  * Created by yfang on 10/29/2017.
  * This is the main class of the game.
  * Each user will have their own board and fleet, where fleet is a 1D array of Ships and board is a 2D array of Cell.
  * Each cell will have a flag to record if it has been attacked, and a pointer to the ship occupying this cell.
- * The ship will have a integer to record the size of the ship, and an array of pointers to the cells it occupies.
+ * The ship will have a integer to record the size of the ship, and a flag to record if the ship is sunk.
+ * A Hashmap is also maintained to record the positions for the whole fleet.
+ * User input is supposed to be a string like "A1","C6", "F10"...
  */
 
 @Slf4j
@@ -14,9 +18,11 @@ public class User {
     private int userID;
     Cell[][] board;
     Ship[] fleet;
+    HashMap<Ship, Cell[]> fleetPositions;
 
     public User(int userID) {
         this.userID = userID;
+        fleetPositions = new HashMap<>();
     }
 
     // This method is the initialize phase of the phase.
@@ -28,16 +34,16 @@ public class User {
     // This is the required implementation of attack method.
     // If the input attack position is out of the board, it will log an error.
     // Otherwise, the cell at the attack position will be checked to determine the result.
-    // More specifically, if the attacked flag is true, it will return "already taken";
-    // if the cell points to the null, it will return "miss";
-    // if the cell points to some ship, it will return "hit";
-    // or if all the cells the ship occupies have been attacked, it will return "sunk";
-    // or if all ship in the fleet has sunken, it will return "win".
+    // More specifically, if the attacked flag is true, it will return "Already taken";
+    // if the cell points to the null, it will return "Miss";
+    // if the cell points to some ship, it will return "Hit";
+    // or if all the cells the ship occupies have been attacked, it will return "Sunk";
+    // or if all ship in the fleet has sunken, it will return "Win".
     public String attack(User targetUser, String[] targetPositions) {
         try {
-            int[] targetPosition = convert(targetPositions[0]);
-            int row = targetPosition[0];
-            int col = targetPosition[1];
+            int[] targetIndex = convert(targetPositions[0]);
+            int row = targetIndex[0];
+            int col = targetIndex[1];
             if(targetUser.board[row][col].isAttacked()) {
                 return "Already Taken";
             }
@@ -49,11 +55,11 @@ public class User {
                 return "Miss";
             }
 
-            if(!ship.checkSunk()) {
+            if(!checkSunk(ship, targetUser)) {
                 return "Hit";
             } else {
                 for(Ship otherShip : targetUser.fleet) {
-                    if (!otherShip.checkSunk()) {
+                    if(!otherShip.isSunk()) {
                         return "Sunk";
                     }
                 }
@@ -77,10 +83,10 @@ public class User {
             int col1 = startPosition[1];
             int row2 = endPosition[0];
             int col2 = endPosition[1];
-            Cell[] positions = new Cell[ship.getSize()];
+            Cell[] positions = new Cell[ship.getType().getSize()];
 
             int count = 0;
-            if (col1 == col2 && Math.abs(row1 - row2) == ship.getSize() - 1) {
+            if (col1 == col2 && Math.abs(row1 - row2) == ship.getType().getSize() - 1) {
                 for (int i = Math.min(row1, row2); i <= Math.max(row1, row2); i++) {
                     positions[count] = board[i][col1];
                     if (positions[count].getShip() != null) {   // if the cell is already occupied,
@@ -92,7 +98,7 @@ public class User {
                     count++;
                     board[i][col1].setShip(ship);
                 }
-            } else if (row1 == row2 && Math.abs(col1 - col2) == ship.getSize() - 1) {
+            } else if (row1 == row2 && Math.abs(col1 - col2) == ship.getType().getSize() - 1) {
                 for (int i = Math.min(col1, col2); i <= Math.max(col1, col2); i++) {
                     positions[count] = board[row1][i];
                     if (positions[count].getShip() != null) {
@@ -108,11 +114,23 @@ public class User {
                 throw new positionException();
             }
 
-            ship.setPositions(positions);
+            fleetPositions.put(ship, positions);
             log.info("Position set for the ship");
         } catch (positionException e) {
             throw e;
         }
+    }
+
+    //This is the method to check if a given ship is sunk or not.
+    private boolean checkSunk(Ship ship, User user) {
+        Cell[] positions = user.fleetPositions.get(ship);
+        for (Cell position: positions) {
+            if (!position.isAttacked()) {
+                return false;
+            }
+        }
+        ship.setSunk(true);
+        return true;
     }
 
     // This is the method to convert the user input(supposedly a string) to the coordinates on the board.
@@ -132,9 +150,9 @@ public class User {
         }
     }
 
-    class positionException extends Exception {
+    static class positionException extends Exception {
     }
 
-    class shipException extends Exception {
+    static class shipException extends Exception {
     }
 }
