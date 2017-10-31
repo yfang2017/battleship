@@ -17,12 +17,9 @@ import java.util.HashMap;
 public class User {
     private int userID;
     Cell[][] board;
-    Ship[] fleet;
-    HashMap<Ship, Cell[]> fleetPositions;
 
     public User(int userID) {
         this.userID = userID;
-        fleetPositions = new HashMap<>();
     }
 
     // This method is the initialize phase of the phase.
@@ -39,33 +36,31 @@ public class User {
     // if the cell points to some ship, it will return "Hit";
     // or if all the cells the ship occupies have been attacked, it will return "Sunk";
     // or if all ship in the fleet has sunken, it will return "Win".
-    public String attack(User targetUser, String[] targetPositions) {
+    public String attack(Position targetPosition) {
         try {
-            int[] targetIndex = convert(targetPositions[0]);
-            int row = targetIndex[0];
-            int col = targetIndex[1];
-            if(targetUser.board[row][col].isAttacked()) {
+            int row = targetPosition.row;
+            int col = targetPosition.col;
+            if(this.board[row][col].isAttacked()) {
                 return "Already Taken";
             }
 
-            targetUser.board[row][col].setAttacked(true);
+            this.board[row][col].setAttacked(true);
 
-            Ship ship = targetUser.board[row][col].getShip();
+            Ship ship = this.board[row][col].getShip();
             if(ship == null) {
                 return "Miss";
             }
 
-            if(!checkSunk(ship, targetUser)) {
+            if(!checkSunk(ship)) {
                 return "Hit";
             } else {
-                for(Ship otherShip : targetUser.fleet) {
-                    if(!otherShip.isSunk()) {
-                        return "Sunk";
-                    }
+                if (checkWin()) {
+                    return "Win";
+                } else {
+                    return "Sunk";
                 }
-                return "Win";
             }
-        } catch (positionException e) {
+        } catch (IndexOutOfBoundsException e) {
             log.error("not valid input position");
             return null;
         }
@@ -114,7 +109,6 @@ public class User {
                 throw new positionException();
             }
 
-            fleetPositions.put(ship, positions);
             log.info("Position set for the ship");
         } catch (positionException e) {
             throw e;
@@ -122,14 +116,29 @@ public class User {
     }
 
     //This is the method to check if a given ship is sunk or not.
-    private boolean checkSunk(Ship ship, User user) {
-        Cell[] positions = user.fleetPositions.get(ship);
-        for (Cell position: positions) {
-            if (!position.isAttacked()) {
-                return false;
+    private boolean checkSunk(Ship ship) {
+        for(int i = 0; i < board.length; i++) {
+            for(int j = 0; j < board[0].length; j++) {
+                Cell cell = board[i][j];
+                Ship curShip = cell.getShip();
+                if (curShip == ship && !cell.isAttacked()) {
+                    return false;
+                }
             }
         }
-        ship.setSunk(true);
+        return true;
+    }
+
+    private boolean checkWin() {
+        for(int i = 0; i < board.length; i++) {
+            for(int j = 0; j < board[0].length; j++) {
+                Cell cell = board[i][j];
+                Ship curShip = cell.getShip();
+                if (curShip != null && !cell.isAttacked()) {
+                    return false;
+                }
+            }
+        }
         return true;
     }
 
